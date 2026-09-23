@@ -1,14 +1,11 @@
-title: "TryHackMe CTF"
-description: "Professional CTF documentation."
-
-theme: jekyll-theme-primer
-
+title: "Infinity Pool — TryHackMe Documentation"
+description: "Professional portfolio documentation for the Infinity Pool TryHackMe CTF."
+theme: jekyll-theme-hacker
+markdown: kramdown
 plugins:
   - jekyll-relative-links
-
 relative_links:
   enabled: true
   collections: true
-
 include:
   - docs
