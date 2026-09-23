@@ -1,20 +1,14 @@
 # ♾️ Infinity Pool — Complete Technical Walkthrough
 
-> **Professional TryHackMe Penetration Testing Documentation**
 
+> 
 <div align="center">
 
-![TryHackMe](https://img.shields.io/badge/TryHackMe-Infinity%20Pool-red?style=for-the-badge&logo=tryhackme)
+> **Professional TryHackMe Penetration Testing Documentation**
 
-![Linux](https://img.shields.io/badge/Target-Linux-blue?style=for-the-badge&logo=linux)
-
-![Category](https://img.shields.io/badge/Web-Security-success?style=for-the-badge)
-
-![Privilege Escalation](https://img.shields.io/badge/Privilege-Escalation-darkred?style=for-the-badge)
-
-![Documentation](https://img.shields.io/badge/Portfolio-Professional-purple?style=for-the-badge)
-
-**Author:** Anurag Ravikumar
+![TryHackMe](https://img.shields.io/badge/TryHackMe-Infinity%20Pool-red?style=for-the-badge&logo=tryhackme)![Linux](https://img.shields.io/badge/Target-Linux-blue?style=for-the-badge&logo=linux)![Category](https://img.shields.io/badge/Web-Security-success?style=for-the-badge)![Privilege Escalation](https://img.shields.io/badge/Privilege-Escalation-darkred?style=for-the-badge)![Documentation](https://img.shields.io/badge/Portfolio-Professional-purple?style=for-the-badge)
+  
+**Author:** Anurag Revankar
 
 Cybersecurity Portfolio • Penetration Testing • TryHackMe Walkthrough
 
