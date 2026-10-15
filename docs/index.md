@@ -1,996 +1,1004 @@
-# ♾️ Infinity Pool
-
-### Advanced Web Application Exploitation • Linux Privilege Escalation • Internal Infrastructure Pivoting
-
-<img src="https://img.shields.io/badge/TryHackMe-Infinity%20Pool-red?style=for-the-badge&logo=tryhackme"/> <img src="https://img.shields.io/badge/Target-Linux-blue?style=for-the-badge&logo=linux"/> <img src="https://img.shields.io/badge/Web-Security-success?style=for-the-badge"/> <img src="https://img.shields.io/badge/Privilege-Escalation-darkred?style=for-the-badge"/> <img src="https://img.shields.io/badge/GitHub-Pages-purple?style=for-the-badge&logo=github"/>
 
 ---
+layout: default
+title: "Infinity Pool"
+description: "TryHackMe Infinity Pool penetration testing walkthrough covering web exploitation, command injection, internal service discovery, SSH tunneling, credential exposure, and Linux privilege escalation."
+category: "TryHackMe | Penetration Testing"
+tags:
+  - TryHackMe
+  - Linux
+  - Web Security
+  - Command Injection
+  - Privilege Escalation
+---
 
-### Cybersecurity Portfolio Project
+<div class="ctf-hero">
 
-*A professional penetration testing walkthrough documenting the complete compromise lifecycle of the Infinity Pool TryHackMe room.*
+  <h1>Infinity Pool</h1>
 
-**Author:** **Anurag Revankar**
+  <p>
+    A technical penetration testing walkthrough documenting the compromise
+    lifecycle of the TryHackMe Infinity Pool laboratory, from external
+    reconnaissance and OS command injection to internal infrastructure
+    discovery, application pivoting, and root-level command execution.
+  </p>
 
-SOC Analyst Aspirant • Penetration Testing Learner • Security Researcher
+  <div class="ctf-badges">
+    <span class="ctf-badge">TryHackMe</span>
+    <span class="ctf-badge">Medium</span>
+    <span class="ctf-badge">Linux</span>
+    <span class="ctf-badge">Web Security</span>
+    <span class="ctf-badge">Command Injection</span>
+    <span class="ctf-badge">Privilege Escalation</span>
+  </div>
+
+</div>
+
+## Navigation
+
+<div class="ctf-toc">
+
+<div class="ctf-toc-title">Documentation Map</div>
+
+- [Mission and Executive Summary](#mission-and-executive-summary)
+- [Quick Overview](#quick-overview)
+- [Assessment Objectives](#assessment-objectives)
+- [Scope and Responsible Use](#scope-and-responsible-use)
+- [Lab Architecture](#lab-architecture)
+- [Threat Model and Attack Surface](#threat-model-and-attack-surface)
+- [Assessment Methodology](#assessment-methodology)
+- [Attack Progress Dashboard](#attack-progress-dashboard)
+- [Reconnaissance](#reconnaissance)
+- [Hidden Endpoint Discovery](#hidden-endpoint-discovery)
+- [Initial Exploitation and Access](#initial-exploitation-and-access)
+- [Linux Post-Exploitation](#linux-post-exploitation)
+- [Internal Service Discovery](#internal-service-discovery)
+- [Watchtower Dashboard](#watchtower-dashboard)
+- [Configuration API Enumeration](#configuration-api-enumeration)
+- [SSH Local Port Forwarding](#ssh-local-port-forwarding)
+- [FreePBX User Control Panel](#freepbx-user-control-panel)
+- [Voicemail Artifact Discovery](#voicemail-artifact-discovery)
+- [Automation API Investigation](#automation-api-investigation)
+- [Root Privilege Escalation](#root-privilege-escalation)
+- [Complete Attack Chain](#complete-attack-chain)
+- [Vulnerability Dashboard](#vulnerability-dashboard)
+- [MITRE ATT&CK Mapping](#mitre-attck-mapping)
+- [OWASP Top 10 Coverage](#owasp-top-10-coverage)
+- [Technology Stack and Tools](#technology-stack-and-tools)
+- [Technical Skills Demonstrated](#technical-skills-demonstrated)
+- [Blue Team Perspective](#blue-team-perspective)
+- [Detection Opportunities](#detection-opportunities)
+- [Security Recommendations](#security-recommendations)
+- [Evidence Gallery](#evidence-gallery)
+- [Learning Outcomes](#learning-outcomes)
+- [Repository Resources](#repository-resources)
+- [Conclusion](#conclusion)
+- [References](#references)
+- [Responsible Use](#responsible-use)
+- [Author](#author)
 
 </div>
 
 ---
 
-# $ project_info
+## Mission and Executive Summary
 
-```bash
-anurag@portfolio:~$ cat infinity_pool_project.info
+### Assessment Overview
 
-Project        : Infinity Pool
-Platform       : TryHackMe
-Operating System : Linux
-Difficulty     : Medium
-Category       : Web Security + Privilege Escalation
-Status         : Completed
-Documentation  : Portfolio Edition
-Version        : v1.0
-```
+Infinity Pool is a Linux-based TryHackMe penetration testing laboratory centered on web application exploitation, internal infrastructure discovery, and privilege escalation.
 
----
+The documented environment simulates a hospitality organization in which operational applications and administrative services are accessible through internal interfaces. Initial access exposes additional attack surfaces that are not directly available through the external web application.
 
-# Welcome
+The assessment illustrates how multiple weaknesses can be chained together to compromise a host and reach privileged execution.
 
-Infinity Pool is a realistic Linux-based penetration testing lab focused on **web exploitation**, **internal infrastructure discovery**, and **privilege escalation**.
+The documented attack lifecycle includes:
 
-Rather than relying on a single critical vulnerability, this room teaches attackers and defenders how **small security weaknesses combine into a complete system compromise**.
+- External network reconnaissance and HTTP enumeration.
+- Discovery of operational resources through `robots.txt`.
+- Investigation of the `/status` and `/internal/` paths.
+- OS command injection and reverse-shell access.
+- Linux post-exploitation and internal service discovery.
+- Investigation of the Watchtower operations dashboard.
+- Configuration API enumeration.
+- SSH local port forwarding to internal services.
+- FreePBX User Control Panel investigation.
+- Discovery of an authentication artifact in voicemail.
+- Investigation of the Automation API.
+- Authenticated command injection and root-level command execution.
 
-This documentation recreates the assessment as a professional cybersecurity engagement suitable for a GitHub portfolio.
+The walkthrough emphasizes the relationship between application security, trust boundaries, credential handling, internal service exposure, and operating system privileges.
 
----
+<div class="key-finding">
 
-# Table of Contents
+<div class="key-finding-title">Primary Security Finding</div>
 
-- [Executive Summary](#executive-summary)
-- [Attack Lifecycle](#attack-lifecycle)
-- [Lab Architecture](#lab-architecture)
-- [Assessment Methodology](#assessment-methodology)
-- [Walkthrough Timeline](#walkthrough-timeline)
-- [Technical Skills Demonstrated](#technical-skills-demonstrated)
-- [Vulnerability Dashboard](#vulnerability-dashboard)
-- [MITRE ATT&CK Mapping](#mitre-attck-mapping)
-- [Blue Team Perspective](#blue-team-perspective)
-- [Lessons Learned](#lessons-learned)
+The documented attack chain demonstrates how command injection, exposed internal configuration, authentication artifact exposure, and insufficiently restricted administrative functionality can combine to produce root-level command execution.
 
----
+</div>
 
-# Executive Summary
+### Assessment Outcome
 
-## Assessment Overview
+The source documentation records successful initial access, internal service investigation, credential-artifact discovery, and root privilege escalation.
 
-Infinity Pool simulates the infrastructure of a hospitality organization where operational services are intentionally hidden behind localhost and interconnected through trusted internal applications.
-
-The assessment followed a complete penetration testing methodology:
-
-- Reconnaissance
-- Web Enumeration
-- Command Injection Discovery
-- Reverse Shell
-- Linux Enumeration
-- Internal Dashboard Investigation
-- REST API Enumeration
-- SSH Local Port Forwarding
-- Credential Chaining
-- Root Privilege Escalation
-
-Every stage expanded the attack surface.
+Challenge flags, passwords, tokens, and sensitive credentials remain redacted in accordance with the original documentation.
 
 ---
 
-## Assessment Objectives
+## Quick Overview
 
-<table>
-<tr>
-<th width="40%">Objective</th>
-<th>Result</th>
-</tr>
+<div class="ctf-card-grid">
 
-<tr>
-<td>Identify public services</td>
-<td>✅ Completed</td>
-</tr>
+  <div class="ctf-card">
+    <div class="ctf-card-title">Platform</div>
+    <div class="ctf-card-value">TryHackMe</div>
+  </div>
 
-<tr>
-<td>Discover hidden endpoints</td>
-<td>✅ Completed</td>
-</tr>
+  <div class="ctf-card">
+    <div class="ctf-card-title">Challenge</div>
+    <div class="ctf-card-value">Infinity Pool</div>
+  </div>
 
-<tr>
-<td>Gain command execution</td>
-<td>✅ Completed</td>
-</tr>
+  <div class="ctf-card">
+    <div class="ctf-card-title">Difficulty</div>
+    <div class="ctf-card-value">Medium</div>
+  </div>
 
-<tr>
-<td>Establish reverse shell</td>
-<td>✅ Completed</td>
-</tr>
+  <div class="ctf-card">
+    <div class="ctf-card-title">Operating System</div>
+    <div class="ctf-card-value">Linux</div>
+  </div>
 
-<tr>
-<td>Enumerate localhost services</td>
-<td>✅ Completed</td>
-</tr>
+  <div class="ctf-card">
+    <div class="ctf-card-title">Primary Focus</div>
+    <div class="ctf-card-value">Web Security and Privilege Escalation</div>
+  </div>
 
-<tr>
-<td>Pivot through internal applications</td>
-<td>✅ Completed</td>
-</tr>
+  <div class="ctf-card">
+    <div class="ctf-card-title">Documented Outcome</div>
+    <div class="ctf-card-value">Root-Level Command Execution</div>
+  </div>
 
-<tr>
-<td>Escalate privileges to root</td>
-<td>✅ Completed</td>
-</tr>
+</div>
 
-<tr>
-<td>Produce professional documentation</td>
-<td>✅ Completed</td>
-</tr>
+### Assessment Objectives
 
-</table>
-
----
-
-# Attack Lifecycle
-
-The room demonstrates a chained compromise across multiple trust boundaries.
-
-<p align="center">
-
-<img src="assets/13_attack_path.png" width="900">
-
-</p>
+| Objective | Documented result |
+|---|---|
+| Identify publicly exposed services | Completed |
+| Discover hidden application endpoints | Completed |
+| Obtain command execution | Completed |
+| Establish a reverse shell | Completed |
+| Stabilize the shell | Completed |
+| Enumerate local services | Completed |
+| Investigate internal dashboards and APIs | Completed |
+| Pivot to internal applications | Completed |
+| Discover an authentication artifact | Completed |
+| Achieve root-level command execution | Completed |
+| Produce security documentation | Completed |
 
 ---
 
-## Visual Attack Flow
+## Scope and Responsible Use
+
+The assessment covers the activities documented in the original Infinity Pool walkthrough.
+
+### Included activities
+
+- External network and web enumeration.
+- Hidden endpoint discovery.
+- Web application exploitation.
+- Linux post-exploitation.
+- Internal service discovery.
+- REST API investigation.
+- SSH port forwarding.
+- Credential-artifact discovery.
+- Privilege escalation analysis.
+- Security findings and defensive recommendations.
+
+### Intentionally redacted information
+
+The original documentation intentionally excludes the following sensitive material:
+
+- User flag.
+- Root flag.
+- Passwords.
+- API keys.
+- Authentication tokens.
+- Automation keys.
+- Private keys and other sensitive credentials.
+
+The purpose of this portfolio entry is to demonstrate methodology, technical reasoning, evidence organization, and security analysis rather than publish challenge answers or secrets.
+
+---
+
+## Lab Architecture
+
+### Hospitality infrastructure
+
+The documented Infinity Pool environment contains a public-facing hospitality portal and multiple internal services.
+
+The following diagram consolidates the architecture and service relationships described in the source material. It is a conceptual representation, not a verified network topology.
 
 ```text
-Internet
-   │
-   ▼
-HTTP Landing Page
-   │
-robots.txt
-   │
-   ▼
-Hidden Status Endpoint
-   │
-OS Command Injection
-   │
-   ▼
-Reverse Shell
-   │
-   ▼
-Linux Enumeration
-   │
-   ▼
-Watchtower Dashboard
-   │
-   ▼
-Configuration API
-   │
-   ▼
-FreePBX UCP
-   │
-Voicemail Artifact
-   │
-   ▼
-Automation API
-   │
-Authenticated Command Injection
-   │
-   ▼
-Root Command Execution
+                         Internet
+                            |
+                            v
+              Byte Lotus Hospitality Web Portal
+                            |
+                 +----------+----------+
+                 |                     |
+                 v                     v
+          Public Landing Page     /status Endpoint
+                                        |
+                                        v
+                               Command Injection
+                                        |
+                                        v
+                                  Reverse Shell
+                                        |
+                                        v
+                              Linux Operating System
+                                        |
+                  +---------------------+--------------------+
+                  |                     |                    |
+                  v                     v                    v
+             Watchtower             FreePBX             Automation API
+              TCP/3000              TCP/8080              TCP/9000
+                  |                     |                    |
+                  v                     v                    v
+             Configuration       Voicemail System       Export Worker
+                  |                     |                    |
+                  +---------------------+--------------------+
+                                        |
+                                        v
+                              Root-Level Execution
 ```
 
----
+### Internal services
 
-# Attack Progress Dashboard
+The original assessment identifies the following local services:
 
-| Stage | Status |
-|--------|--------|
-| Network Reconnaissance | 🟢 Complete |
-| Web Enumeration | 🟢 Complete |
-| Hidden Endpoint Discovery | 🟢 Complete |
-| OS Command Injection | 🟢 Complete |
-| Reverse Shell | 🟢 Complete |
-| Shell Stabilization | 🟢 Complete |
-| Linux Enumeration | 🟢 Complete |
-| Internal Dashboard Discovery | 🟢 Complete |
-| REST API Enumeration | 🟢 Complete |
-| SSH Tunnel Pivot | 🟢 Complete |
-| Credential Discovery | 🟢 Complete |
-| Root Privilege Escalation | 🟢 Complete |
+| Port | Service or role | Documented purpose |
+|---:|---|---|
+| 3000 | Watchtower | Internal operations dashboard |
+| 8080 | FreePBX UCP | Telephony user control panel |
+| 9000 | Automation API | Administrative automation and export worker |
+| 3306 | MySQL | Internal database service |
+| 5038 | Telephony service | Internal telephony functionality |
+
+The original material does not provide service version numbers for these entries.
 
 ---
 
-# Lab Architecture
+## Threat Model and Attack Surface
 
-## Hospitality Infrastructure
+### External attack surface
 
-The Infinity Pool environment contains multiple interconnected applications.
+The source identifies the following publicly exposed services:
 
-```text
-                   Internet
-                       │
-                       ▼
-      Byte Lotus Hospitality Web Portal
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-        ▼                             ▼
-   Public Landing Page          /status Endpoint
-                                      │
-                                      ▼
-                              Command Injection
-                                      │
-                                      ▼
-                               Reverse Shell
-                                      │
-                                      ▼
-                          Linux Operating System
-                                      │
-        ┌──────────────┬──────────────┴─────────────┐
-        │              │                            │
-        ▼              ▼                            ▼
- Watchtower         FreePBX UCP              Automation API
-   TCP/3000           TCP/8080                 TCP/9000
-        │              │                            │
-        ▼              ▼                            ▼
- Config API       Voicemail System          Export Worker
-        │              │                            │
-        └──────────────┴──────────────┬─────────────┘
-                                      ▼
-                                Root Context
-```
+| Port | Service | Role |
+|---:|---|---|
+| TCP/22 | SSH | Secure remote administration |
+| TCP/80 | HTTP | Public web application |
+
+The walkthrough begins with network reconnaissance and web application enumeration.
+
+### Internal attack surface
+
+The following applications and components were investigated after initial access:
+
+| Component | Documented role | Security relevance |
+|---|---|---|
+| Watchtower | Operations dashboard | Internal status and configuration information |
+| Watchtower configuration API | Configuration endpoint | Internal service references and infrastructure metadata |
+| FreePBX UCP | Telephony administration interface | User interface and voicemail investigation |
+| Voicemail system | Operational communication | Discovery of an authentication artifact |
+| Automation API | Administrative service | Export worker and command-injection attack surface |
+| MySQL | Database service | Internal storage |
+| Telephony service | Telephony infrastructure | Internal service exposure |
+
+### Security observation
+
+> A service bound to localhost is not automatically trustworthy.
+
+Local-only services may be inaccessible from the external network while remaining reachable by a process or user who already has access to the host.
+
+If initial access is obtained through a web application, insufficient authentication and authorization on internal services can allow that access to be extended into other applications.
 
 ---
 
-# Assessment Methodology
+## Assessment Methodology
 
-The engagement follows industry-style penetration testing phases inspired by PTES and OWASP WSTG.
+The assessment follows the phases documented in the original walkthrough.
 
-| Phase | Goal |
-|--------|------|
-| Reconnaissance | Identify exposed infrastructure. |
-| Enumeration | Discover web technologies and hidden resources. |
-| Vulnerability Discovery | Validate insecure input handling. |
-| Exploitation | Achieve remote code execution. |
-| Initial Access | Obtain Linux shell. |
-| Post Exploitation | Enumerate operating system. |
-| Internal Discovery | Map localhost services. |
-| Pivoting | Investigate internal applications. |
-| Privilege Escalation | Execute commands as root. |
-| Reporting | Document findings professionally. |
+| Phase | Objective |
+|---|---|
+| Reconnaissance | Identify exposed infrastructure |
+| Enumeration | Discover web technologies and hidden resources |
+| Vulnerability discovery | Identify insecure input handling |
+| Exploitation | Obtain remote command execution |
+| Initial access | Establish a Linux shell |
+| Post-exploitation | Enumerate the operating system |
+| Internal discovery | Identify localhost services |
+| Pivoting | Investigate internal applications |
+| Privilege escalation | Reach root-level execution |
+| Reporting | Document findings and defensive controls |
 
----
-
-# Walkthrough Timeline
-
-## Phase 1 — Reconnaissance
-
-Discover the external attack surface.
-
-<p align="center">
-
-<img src="assets/01_initial_web.png" width="850">
-
-</p>
-
-### Key Activities
-
-- Service Enumeration
-- HTTP Fingerprinting
-- Landing Page Review
+The methodology combines external enumeration, application testing, host-level investigation, and analysis of internal trust relationships.
 
 ---
 
-## Phase 2 — Hidden Endpoint Discovery
+## Attack Progress Dashboard
 
-robots.txt exposed operational resources.
+| Assessment stage | Status |
+|---|---|
+| Network reconnaissance | Complete |
+| Web enumeration | Complete |
+| Hidden endpoint discovery | Complete |
+| OS command injection | Complete |
+| Reverse shell | Complete |
+| Shell stabilization | Complete |
+| Linux enumeration | Complete |
+| Internal dashboard discovery | Complete |
+| REST API enumeration | Complete |
+| SSH tunnel pivot | Complete |
+| Credential discovery | Complete |
+| Root privilege escalation | Complete |
 
-<p align="center">
+These statuses reflect the outcome recorded in the original source documentation.
 
-<img src="assets/02_status_endpoint.png" width="850">
+---
 
-</p>
+## Reconnaissance
 
-### Key Discovery
+### Phase 1 — Initial web reconnaissance
+
+The assessment begins with external service enumeration and inspection of the public web application.
+
+The original documentation identifies Nmap as an enumeration tool and records HTTP fingerprinting and landing-page review as activities performed during this phase.
+
+<figure>
+  <img src="assets/01_initial_web.png" alt="Original Infinity Pool initial web reconnaissance screenshot." loading="lazy">
+  <figcaption>Figure 1 — Initial web application reconnaissance.</figcaption>
+</figure>
+
+### Reconnaissance objectives
+
+- Identify publicly exposed services.
+- Inspect the HTTP landing page.
+- Review application behavior.
+- Identify resources that may reveal additional attack surfaces.
+
+The original material does not include the exact Nmap command, scan output, target IP address, or detected service versions. These details are therefore not reconstructed.
+
+---
+
+## Hidden Endpoint Discovery
+
+### Phase 2 — `robots.txt` investigation
+
+The walkthrough records that `robots.txt` exposed operational resource paths.
+
+The following paths were documented:
 
 ```text
 /status
 /internal/
 ```
 
+<figure>
+  <img src="assets/02_status_endpoint.png" alt="Original Infinity Pool screenshot showing the status endpoint discovery." loading="lazy">
+  <figcaption>Figure 2 — Hidden status endpoint discovery.</figcaption>
+</figure>
+
+### Security significance
+
+The `robots.txt` file is intended to communicate crawler preferences. It does not enforce access control.
+
+Operational endpoints referenced in a publicly accessible `robots.txt` file may reveal application structure to an unauthenticated visitor.
+
+The discovery of `/status` provided the next investigation point and led to the documented command-injection finding.
+
 ---
 
-## Phase 3 — OS Command Injection
+## Initial Exploitation and Access
 
-Input validation testing identified remote command execution.
+### Phase 3 — OS command injection
 
-<p align="center">
+The original walkthrough records insecure input handling in the status functionality.
 
-<img src="assets/03_command_injection.png" width="850">
+The application was vulnerable to OS command injection, allowing input to influence operating system command execution.
 
-</p>
+<figure>
+  <img src="assets/03_command_injection.png" alt="Original Infinity Pool command-injection evidence screenshot." loading="lazy">
+  <figcaption>Figure 3 — Command-injection investigation.</figcaption>
+</figure>
 
-### Security Classification
+### Security classification
 
-| Type | Value |
-|------|-------|
+| Attribute | Documented classification |
+|---|---|
+| Vulnerability | OS command injection |
 | CWE | CWE-78 |
-| OWASP | A03 Injection |
-| Impact | Remote Code Execution |
+| OWASP category | A03 — Injection |
+| Documented impact | Remote command execution |
 
----
+### How the weakness affects security
 
-## Phase 4 — Reverse Shell
+OS command injection occurs when an application constructs or invokes operating system commands using untrusted input without safely separating data from executable command syntax.
 
-Interactive Linux shell established.
+If an attacker can control the resulting command, the application may execute operations beyond its intended function.
 
-<p align="center">
+The impact depends on the privileges of the vulnerable process, the surrounding system configuration, and the attacker's ability to reach the affected functionality.
 
-<img src="assets/04_reverse_shell.png" width="850">
+### Phase 4 — Reverse-shell access
 
-</p>
+The source records that exploitation resulted in an interactive Linux shell.
 
-### Post Exploitation Begins
+<figure>
+  <img src="assets/04_reverse_shell.png" alt="Original Infinity Pool reverse-shell evidence screenshot." loading="lazy">
+  <figcaption>Figure 4 — Reverse-shell access following initial exploitation.</figcaption>
+</figure>
 
-- PTY Stabilization
-- User Enumeration
-- Filesystem Discovery
+The walkthrough then proceeds to shell stabilization, user enumeration, and filesystem discovery.
 
----
+The original source does not contain the exact exploit payload, listener command, callback address, or callback port. These values are not invented in this document.
 
-## Phase 5 — Linux Enumeration
+<div class="attack-chain">
 
-Enumerating localhost services dramatically expanded visibility.
-
-<p align="center">
-
-<img src="assets/05_internal_services.png" width="850">
-
-</p>
-
-### Internal Services Found
-
-| Port | Service |
-|------|---------|
-| 3000 | Watchtower |
-| 8080 | FreePBX UCP |
-| 9000 | Automation API |
-| 3306 | MySQL |
-| 5038 | Telephony Service |
-
----
-
-# Technical Skills Demonstrated
-
-## Offensive Security Skills
-
-<table>
-<tr>
-<td width="50%">
-
-### Web Security
-
-- Nmap Enumeration
-- robots.txt Discovery
-- HTTP Enumeration
-- Command Injection
-- Reverse Shells
-
-</td>
-
-<td width="50%">
-
-### Linux Exploitation
-
-- Bash
-- PTY Stabilization
-- Network Enumeration
-- SSH Port Forwarding
-- Privilege Escalation
-
-</td>
-</tr>
-</table>
-
----
-
-## Security Engineering Skills
-
-<table>
-<tr>
-<td width="50%">
-
-### Infrastructure Analysis
-
-- Service Discovery
-- Internal Dashboard Investigation
-- REST API Enumeration
-- Configuration Disclosure
-
-</td>
-
-<td width="50%">
-
-### Reporting
-
-- MITRE ATT&CK Mapping
-- OWASP Mapping
-- Risk Assessment
-- Defensive Recommendations
-
-</td>
-</tr>
-</table>
-
----
-
-# Technology Stack
-
-| Technology | Role |
-|------------|------|
-| Linux | Target Operating System |
-| Gunicorn | Python Web Server |
-| Python | Backend Application |
-| Watchtower | Operations Dashboard |
-| FreePBX | Internal Telephony Platform |
-| REST API | Automation Interface |
-| OpenSSH | Internal Pivoting |
-| Netcat | Reverse Shell Listener |
-
----
-
-# Assessment Scope
-
-## Included
-
-- External Enumeration
-- Web Exploitation
-- Linux Enumeration
-- Internal Services
-- Privilege Escalation
-- Security Analysis
-- Defensive Recommendations
-
-## Redacted
-
-- User Flag
-- Root Flag
-- Passwords
-- API Keys
-- Tokens
-- Secrets
-- Private Keys
-
-> This repository demonstrates **methodology** rather than challenge answers.
-
----
-
-# Threat Model
-
-## Initial Exposure
-
-<table>
-<tr>
-<th>Public Asset</th>
-<th>Purpose</th>
-</tr>
-
-<tr>
-<td>TCP/22</td>
-<td>SSH</td>
-</tr>
-
-<tr>
-<td>TCP/80</td>
-<td>Web Application</td>
-</tr>
-
-</table>
-
----
-
-## Internal Exposure
-
-<table>
-<tr>
-<th>Service</th>
-<th>Purpose</th>
-</tr>
-
-<tr>
-<td>Watchtower</td>
-<td>Operational Dashboard</td>
-</tr>
-
-<tr>
-<td>UCP</td>
-<td>Telephony Administration</td>
-</tr>
-
-<tr>
-<td>Automation API</td>
-<td>Administrative Worker</td>
-</tr>
-
-<tr>
-<td>Database</td>
-<td>Internal Storage</td>
-</tr>
-
-</table>
-
----
-
-# Security Observation
-
-Infinity Pool illustrates a realistic enterprise assumption:
-
-> **"If it's bound to localhost, it's trusted."**
-
-The walkthrough demonstrates why that assumption fails once an attacker gains initial shell access.
-
----
-
----
-
-<div align="center">
-
-# ⚡ Exploitation Walkthrough
-
-*A visual timeline documenting every major phase of the Infinity Pool assessment.*
+  <div class="attack-step">Web Enumeration</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Hidden Endpoint</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Command Injection</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Reverse Shell</div>
 
 </div>
 
 ---
 
-# 🛰️ Phase 6 — Watchtower Internal Operations Dashboard
+## Linux Post-Exploitation
 
-The first localhost-only administrative application discovered during post-exploitation was **Watchtower**, an operational monitoring dashboard accessible only from inside the compromised host.
+### Phase 5 — Host and service enumeration
 
-<img src="assets/06_watchtower.png" width="100%">
+After obtaining shell access, the documented methodology moves to Linux post-exploitation.
 
----
+The objectives include:
 
-## What Was Identified?
+- Stabilizing the shell with a pseudo-terminal (PTY).
+- Enumerating the current user and environment.
+- Investigating the filesystem.
+- Identifying local services.
+- Discovering administrative interfaces that are not externally exposed.
 
-<table>
-<tr>
-<th width="35%">Component</th>
-<th>Observation</th>
-</tr>
+<figure>
+  <img src="assets/05_internal_services.png" alt="Original Infinity Pool screenshot showing internal service enumeration." loading="lazy">
+  <figcaption>Figure 5 — Internal service discovery during Linux post-exploitation.</figcaption>
+</figure>
 
-<tr>
-<td>Dashboard</td>
-<td>Internal infrastructure monitoring interface.</td>
-</tr>
+### Internal service discovery
 
-<tr>
-<td>Status Feed</td>
-<td>Operational service health information.</td>
-</tr>
+The original walkthrough records the following services:
 
-<tr>
-<td>REST API</td>
-<td>Health and configuration endpoints discovered.</td>
-</tr>
+| Port | Service |
+|---:|---|
+| 3000 | Watchtower |
+| 8080 | FreePBX UCP |
+| 9000 | Automation API |
+| 3306 | MySQL |
+| 5038 | Telephony service |
 
-<tr>
-<td>Administrative Notes</td>
-<td>Infrastructure metadata exposed.</td>
-</tr>
+### Why this phase matters
 
-</table>
+External reconnaissance describes what is reachable from outside a target. Host-level enumeration can expose a different set of applications and trust relationships.
 
----
-
-## Security Observation
-
-> Watchtower trusted **localhost** instead of authenticated users.
-
-This is a common enterprise security anti-pattern where internal dashboards assume local requests are always trusted.
+A web application compromise can become substantially more serious when the compromised process can access local administrative interfaces, databases, or automation workers.
 
 ---
 
-# 🔍 Phase 7 — Configuration API Enumeration
+## Watchtower Dashboard
+
+### Phase 6 — Internal operations dashboard
+
+Watchtower was identified as an internal operations and monitoring dashboard accessible from within the compromised host.
+
+<figure>
+  <img src="assets/06_watchtower.png" alt="Original Infinity Pool Watchtower internal dashboard screenshot." loading="lazy">
+  <figcaption>Figure 6 — Watchtower internal operations dashboard.</figcaption>
+</figure>
+
+### Documented observations
+
+| Component | Observation |
+|---|---|
+| Dashboard | Internal infrastructure monitoring interface |
+| Status feed | Operational service-health information |
+| REST API | Health and configuration endpoints |
+| Administrative notes | Infrastructure metadata |
+
+### Security observation
+
+The source describes a trust assumption in which local requests were treated as trustworthy.
+
+Localhost binding can reduce direct network exposure, but it does not establish the identity or authorization of the requesting process.
+
+A secure design must enforce authentication and authorization independently of network location.
+
+---
+
+## Configuration API Enumeration
+
+### Phase 7 — Configuration disclosure
 
 The configuration endpoint exposed internal infrastructure relationships.
 
-<img src="assets/07_watchtower_config.png" width="100%">
+<figure>
+  <img src="assets/07_watchtower_config.png" alt="Original Infinity Pool Watchtower configuration API screenshot." loading="lazy">
+  <figcaption>Figure 7 — Watchtower configuration API investigation.</figcaption>
+</figure>
 
----
+### Documented information exposure
 
-## Configuration Disclosure
+| Information exposed | Original assessment rating |
+|---|---|
+| Internal service URLs | High |
+| Telephony portal references | High |
+| Automation worker references | High |
+| Administrative notes | Medium |
+| Infrastructure metadata | Medium |
 
-| Information Exposed | Security Impact |
-|---------------------|-----------------|
-| Internal Service URLs | High |
-| Telephony Portal | High |
-| Automation Worker Reference | High |
-| Administrative Notes | Medium |
-| Infrastructure Metadata | Medium |
+These ratings are reproduced from the original source's configuration-disclosure table. They are not presented as independently calculated CVSS scores.
 
----
+### Security finding — Sensitive configuration disclosure
 
-## Security Finding
-
-> **Sensitive Configuration Disclosure**
-
-The endpoint leaked information useful for lateral movement after initial compromise.
-
-| Category | Value |
-|----------|-------|
+| Attribute | Value |
+|---|---|
+| Category | Information disclosure |
 | CWE | CWE-200 |
-| Severity | High |
-| Risk | Information Disclosure |
+| Original severity | High |
+| Potential impact | Disclosure of internal infrastructure information |
+
+Configuration data can reveal service relationships and operational details that help an attacker identify further targets after an initial compromise.
+
+The defensive objective is to prevent unauthorized users and processes from obtaining sensitive configuration data, credentials, and internal service references.
 
 ---
 
-# 🔗 Phase 8 — SSH Local Port Forwarding
+## SSH Local Port Forwarding
 
-Localhost services became accessible securely through SSH tunneling.
+### Phase 8 — Internal service access
 
-<img src="assets/08_ssh_port_forwarding.png" width="100%">
+The walkthrough documents SSH local port forwarding as the mechanism used to access internal services from the assessment environment.
 
----
+<figure>
+  <img src="assets/08_ssh_port_forwarding.png" alt="Original Infinity Pool SSH local port-forwarding screenshot." loading="lazy">
+  <figcaption>Figure 8 — SSH local port-forwarding investigation.</figcaption>
+</figure>
 
-## Tunnel Architecture
+### Documented tunnel architecture
 
 ```text
 Kali Linux
-     │
-localhost:3000
-localhost:8080
-localhost:9000
-     │
-SSH Tunnel
-     │
+    |
+    +---- localhost:3000
+    |
+    +---- localhost:8080
+    |
+    +---- localhost:9000
+    |
+    v
+ SSH Local Tunnel
+    |
+    v
 127.0.0.1 Services
-     │
+    |
+    v
 Target Linux Host
 ```
 
----
-
-## Benefits During Assessment
+### Assessment benefits
 
 - Browser access to internal dashboards.
-- REST API testing.
-- Local application interaction.
-- No firewall modification required.
+- Investigation of REST APIs.
+- Interaction with internal applications.
+- Access to localhost-bound services through a tunnel.
+
+### Security considerations
+
+SSH forwarding can be a legitimate administrative capability, but it can also provide a path to internal services when an attacker controls an account or process capable of establishing a tunnel.
+
+Defenders should monitor unusual forwarding activity, constrain forwarding where appropriate, and review which users can access internal administrative interfaces.
+
+The source does not provide the exact SSH command, account name, or authentication method used for the tunnel.
 
 ---
 
-# ☎️ Phase 9 — FreePBX User Control Panel (UCP)
+## FreePBX User Control Panel
 
-Authentication exposed the internal telephony administration interface.
+### Phase 9 — Telephony application investigation
 
-<img src="assets/09_ucp_login.png" width="100%">
+The original walkthrough records investigation of the FreePBX User Control Panel (UCP).
 
----
+<figure>
+  <img src="assets/09_ucp_login.png" alt="Original Infinity Pool FreePBX UCP login screenshot." loading="lazy">
+  <figcaption>Figure 9 — FreePBX User Control Panel investigation.</figcaption>
+</figure>
 
-## Areas Investigated
+### Areas investigated
 
-| Section | Purpose |
-|---------|---------|
+| Section | Documented purpose |
+|---|---|
 | Dashboard | User overview |
 | Voicemail | Internal messages |
 | Settings | Account configuration |
 | Notifications | Operational communication |
 
----
+### Security perspective
 
-## Security Perspective
+Internal collaboration and telephony applications can contain operational communications and authentication-related material.
 
-Operational collaboration platforms frequently become valuable post-exploitation targets because they contain internal communications.
+Once an attacker gains access to an internal application, data that appears unrelated to the initial vulnerability may become relevant to the broader attack chain.
 
----
-
-# 🔐 Phase 10 — Voicemail Artifact Discovery
-
-Voicemail contained an operational authentication artifact related to the automation platform.
-
-<img src="assets/10_automation_key.png" width="100%">
+The original walkthrough proceeds from the UCP investigation to voicemail artifact discovery.
 
 ---
 
-## Portfolio Redaction Policy
+## Voicemail Artifact Discovery
 
-The following information has been intentionally removed:
+### Phase 10 — Authentication artifact
 
-- API Keys
-- Authentication Tokens
-- Passwords
-- User Flag
-- Root Flag
-- Secrets
+The source records discovery of an operational authentication artifact in voicemail that was associated with the automation platform.
 
-Only the methodology is preserved.
+<figure>
+  <img src="assets/10_automation_key.png" alt="Original Infinity Pool screenshot documenting the voicemail-related automation authentication artifact." loading="lazy">
+  <figcaption>Figure 10 — Authentication artifact discovery associated with the automation service.</figcaption>
+</figure>
 
----
+### Security significance
 
-# 🤖 Phase 11 — Automation API Investigation
+Authentication material exposed through operational communications can allow access to services beyond the application where it was discovered.
 
-The Automation Service exposed privileged administrative functionality.
+The risk depends on the artifact's permissions, scope, validity, and the controls protecting the associated service.
 
-<img src="assets/11_automation_api.png" width="100%">
+The original walkthrough intentionally redacts the actual artifact.
 
----
+### Portfolio redaction policy
 
-## API Enumeration Summary
+The following material remains excluded:
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/health` | Service Health |
-| `/jobs/export` | Export Worker |
-| Internal APIs | Administrative Operations |
+- API keys.
+- Authentication tokens.
+- Passwords.
+- User flag.
+- Root flag.
+- Automation keys.
+- Sensitive credentials.
 
----
-
-## Security Observation
-
-The export endpoint constructed operating system commands using user-controlled input.
-
-This became the privilege escalation vector.
+No attempt has been made to reconstruct these values.
 
 ---
 
-# 👑 Phase 12 — Root Privilege Escalation
+## Automation API Investigation
 
-Authenticated command injection resulted in root-level command execution.
+### Phase 11 — Administrative automation service
 
-<img src="assets/12_root_access.png" width="100%">
+The Automation API exposed administrative functionality associated with an export worker.
 
----
+<figure>
+  <img src="assets/11_automation_api.png" alt="Original Infinity Pool Automation API screenshot." loading="lazy">
+  <figcaption>Figure 11 — Automation API investigation.</figcaption>
+</figure>
 
-## Final Result
+### Documented API endpoints
 
-<table>
-<tr>
-<th width="40%">Objective</th>
-<th>Status</th>
-</tr>
+| Endpoint | Documented purpose |
+|---|---|
+| `/health` | Service health |
+| `/jobs/export` | Export worker |
+| Internal APIs | Administrative operations |
 
-<tr>
-<td>Root Execution</td>
-<td>✅ Achieved</td>
-</tr>
+### Security observation
 
-<tr>
-<td>Privilege Escalation</td>
-<td>✅ Successful</td>
-</tr>
+The original walkthrough identifies an export endpoint that constructed operating system commands using user-controlled input.
 
-<tr>
-<td>Challenge Flag</td>
-<td>🔒 Redacted</td>
-</tr>
+This introduced a second command-injection issue into the documented attack chain.
 
-</table>
+The distinction between the initial command-injection issue and the authenticated automation endpoint is important: the latter is described in the source as requiring authentication and enabling root-level command execution.
+
+The source does not include the exact HTTP request, authentication header, payload, or API response. Those details are not reconstructed.
 
 ---
 
-<div align="center">
+## Root Privilege Escalation
 
-# 🧬 Complete Attack Chain
+### Phase 12 — Root-level command execution
+
+The documented assessment concludes with authenticated command injection in the automation service and root-level command execution.
+
+<figure>
+  <img src="assets/12_root_access.png" alt="Original Infinity Pool screenshot documenting root-level command execution." loading="lazy">
+  <figcaption>Figure 12 — Root-level command execution following the documented privilege-escalation path.</figcaption>
+</figure>
+
+### Final assessment outcome
+
+| Objective | Documented status |
+|---|---|
+| Root-level command execution | Achieved |
+| Privilege escalation | Successful |
+| Challenge flag | Redacted |
+
+### Escalation path
+
+<div class="attack-chain">
+
+  <div class="attack-step">Initial Shell</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Internal Enumeration</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Credential Artifact</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Automation API</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Authenticated Command Injection</div>
+  <div class="attack-arrow">→</div>
+  <div class="attack-step">Root Execution</div>
 
 </div>
+
+The source documents the successful outcome but does not provide the exact vulnerable source code, exploit request, command payload, or detailed process-privilege configuration.
+
+---
+
+## Complete Attack Chain
+
+The following diagram consolidates the full documented compromise lifecycle.
 
 ```text
-Nmap Scan
-    │
-    ▼
+External Reconnaissance
+          |
+          v
 HTTP Enumeration
-    │
-    ▼
+          |
+          v
 robots.txt Discovery
-    │
-    ▼
-Hidden Status Endpoint
-    │
-    ▼
+          |
+          v
+/status and /internal/
+          |
+          v
 OS Command Injection
-    │
-    ▼
+          |
+          v
 Reverse Shell
-    │
-    ▼
-Linux Enumeration
-    │
-    ▼
+          |
+          v
+Linux Post-Exploitation
+          |
+          v
+Internal Service Discovery
+          |
+          v
 Watchtower Dashboard
-    │
+          |
+          v
 Configuration Disclosure
-    │
-    ▼
+          |
+          v
+SSH Local Port Forwarding
+          |
+          v
 FreePBX UCP
-    │
-Voicemail Artifact
-    │
-    ▼
+          |
+          v
+Voicemail Authentication Artifact
+          |
+          v
 Automation Authentication
-    │
-    ▼
+          |
+          v
 Automation API
-    │
+          |
+          v
 Authenticated Command Injection
-    │
-    ▼
-Root Command Execution
+          |
+          v
+Root-Level Command Execution
 ```
 
----
+<figure>
+  <img src="assets/13_attack_path.png" alt="Original Infinity Pool attack-path diagram." loading="lazy">
+  <figcaption>Figure 13 — Original documented attack-path overview.</figcaption>
+</figure>
 
-# 📊 Vulnerability Dashboard
+### Attack-chain interpretation
 
-<table>
-<tr>
-<th>Finding</th>
-<th>Severity</th>
-<th>CWE</th>
-</tr>
+The progression demonstrates three important security relationships:
 
-<tr>
-<td>OS Command Injection</td>
-<td>🔴 High</td>
-<td>CWE-78</td>
-</tr>
+1. **Initial access creates visibility.** A web application vulnerability can provide an attacker with an execution context on the underlying operating system.
 
-<tr>
-<td>Configuration Disclosure</td>
-<td>🟠 High</td>
-<td>CWE-200</td>
-</tr>
+2. **Internal services expand the attack surface.** Applications that are inaccessible from the external network may become reachable from a compromised host or through authorized forwarding mechanisms.
 
-<tr>
-<td>Credential Exposure</td>
-<td>🟠 High</td>
-<td>CWE-522</td>
-</tr>
-
-<tr>
-<td>Localhost Trust Boundary Abuse</td>
-<td>🔴 High</td>
-<td>CWE-284</td>
-</tr>
-
-<tr>
-<td>Authenticated Command Injection</td>
-<td>🔴 Critical</td>
-<td>CWE-78</td>
-</tr>
-
-</table>
+3. **Credential exposure and unsafe command construction can amplify impact.** Authentication material found in an operational application may enable access to another service, where an additional injection weakness can lead to more privileged execution.
 
 ---
 
-# MITRE ATT&CK Mapping
+## Vulnerability Dashboard
 
-<table>
-<tr>
-<th width="22%">Technique</th>
-<th>Description</th>
-</tr>
+The following findings reproduce the classifications recorded in the original documentation.
 
-<tr>
-<td>T1595</td>
-<td>Active Service Scanning</td>
-</tr>
+| Finding | Original severity | CWE |
+|---|---|---|
+| OS command injection | High | CWE-78 |
+| Configuration disclosure | High | CWE-200 |
+| Credential exposure | High | CWE-522 |
+| Localhost trust-boundary abuse | High | CWE-284 |
+| Authenticated command injection | Critical | CWE-78 |
 
-<tr>
-<td>T1190</td>
-<td>Exploit Public-Facing Application</td>
-</tr>
+The severity labels above are source-reported classifications, not independently validated ratings.
 
-<tr>
-<td>T1059.004</td>
-<td>Unix Shell</td>
-</tr>
+### Finding 1 — OS command injection
 
-<tr>
-<td>T1105</td>
-<td>Ingress Tool Transfer</td>
-</tr>
+**Evidence:** The source documents command injection through the status functionality, followed by reverse-shell access.
 
-<tr>
-<td>T1046</td>
-<td>Network Service Discovery</td>
-</tr>
+**Impact:** Remote command execution within the privileges available to the vulnerable application process.
 
-<tr>
-<td>T1021.004</td>
-<td>SSH Remote Services</td>
-</tr>
+**Recommended control:** Avoid shell-based command construction. Use safe process APIs, strict input validation, and least-privilege execution.
 
-<tr>
-<td>T1552</td>
-<td>Unsecured Credentials</td>
-</tr>
+### Finding 2 — Configuration disclosure
 
-<tr>
-<td>T1078</td>
-<td>Valid Accounts</td>
-</tr>
+**Evidence:** The Watchtower configuration endpoint exposed internal service references and infrastructure metadata.
 
-<tr>
-<td>T1068</td>
-<td>Privilege Escalation</td>
-</tr>
+**Impact:** Internal infrastructure information became available for subsequent enumeration and pivoting.
 
-</table>
+**Recommended control:** Restrict configuration endpoints and remove secrets and unnecessary infrastructure details from responses.
 
----
+### Finding 3 — Credential exposure
 
-# 🛡️ OWASP Top 10 Coverage
+**Evidence:** The source documents an authentication artifact discovered through voicemail and associated with the automation platform.
 
-<table>
-<tr>
-<th width="32%">OWASP Category</th>
-<th>Observed During Assessment</th>
-</tr>
+**Impact:** Exposed authentication material may allow access to additional services, depending on its permissions and validity.
 
-<tr>
-<td>A01 — Broken Access Control</td>
-<td>Localhost trust assumptions.</td>
-</tr>
+**Recommended control:** Store credentials in a dedicated secrets-management system, restrict access, and rotate exposed artifacts.
 
-<tr>
-<td>A03 — Injection</td>
-<td>Command Injection vulnerabilities.</td>
-</tr>
+### Finding 4 — Localhost trust-boundary abuse
 
-<tr>
-<td>A05 — Security Misconfiguration</td>
-<td>Configuration endpoint exposure.</td>
-</tr>
+**Evidence:** Internal applications were investigated after obtaining shell access, and local services became accessible through SSH forwarding.
 
-<tr>
-<td>A07 — Authentication Failures</td>
-<td>Operational credential exposure.</td>
-</tr>
+**Impact:** Network-location assumptions may permit unauthorized access when authentication and authorization controls are insufficient.
 
-<tr>
-<td>A09 — Logging & Monitoring Failures</td>
-<td>No detection for shell execution.</td>
-</tr>
+**Recommended control:** Authenticate and authorize access to internal services independently of whether requests originate from localhost.
 
-</table>
+### Finding 5 — Authenticated command injection
+
+**Evidence:** The Automation API export endpoint was documented as constructing operating system commands from user-controlled input. The source records root-level execution as the final result.
+
+**Impact:** Administrative command execution with root-level consequences.
+
+**Recommended control:** Eliminate unsafe shell invocation, validate structured request data, and run automation workers with the minimum privileges required.
 
 ---
 
-<div align="center">
+## MITRE ATT&CK Mapping
 
-# 🔵 Blue Team Perspective
+The original source provides the following ATT&CK technique mappings. They are retained here as source-documented mappings rather than independently verified classifications.
 
-*How defenders could detect and prevent this attack chain.*
+| Technique ID | Source-provided technique | Documented context |
+|---|---|---|
+| T1595 | Active Service Scanning | External reconnaissance |
+| T1190 | Exploit Public-Facing Application | Initial web application exploitation |
+| T1059.004 | Unix Shell | Shell-based command execution |
+| T1105 | Ingress Tool Transfer | Included in the original mapping; specific transfer evidence is not supplied |
+| T1046 | Network Service Discovery | Internal service enumeration |
+| T1021.004 | SSH Remote Services | SSH-based internal access and forwarding |
+| T1552 | Unsecured Credentials | Authentication artifact discovery |
+| T1078 | Valid Accounts | Authenticated access to the automation service |
+| T1068 | Privilege Escalation | Included in the original mapping; the specific privilege-escalation mechanism is not fully documented |
 
-</div>
-
----
-
-## Detection Opportunities
-
-| Detection Area | Why Monitor |
-|----------------|------------|
-| Shell Execution | Gunicorn spawning Bash. |
-| SSH Local Forwarding | Internal pivoting. |
-| Export API Requests | Abuse of automation worker. |
-| Configuration API Access | Unauthorized enumeration. |
-| Reverse Shell Connections | Outbound TCP sessions. |
+A mapping's inclusion in the original writeup does not, by itself, establish that all required technique-specific evidence has been captured. A formal assessment should validate each mapping against the actual actions and evidence.
 
 ---
 
-## Hunt Ideas
+## OWASP Top 10 Coverage
 
-### Suspicious Child Processes
+The original documentation associates the following categories with the assessment.
+
+| OWASP category | Source-documented context |
+|---|---|
+| A01 — Broken Access Control | Localhost trust assumptions and internal access |
+| A03 — Injection | Command-injection vulnerabilities |
+| A05 — Security Misconfiguration | Configuration endpoint exposure |
+| A07 — Authentication Failures | Operational credential exposure |
+| A09 — Logging & Monitoring Failures | Detection gaps involving shell execution |
+
+These are the categories cited by the original report. The table records the source's classifications rather than claiming that every category has been independently validated against a specific OWASP edition.
+
+---
+
+## Technology Stack and Tools
+
+### Documented technologies
+
+| Technology | Role |
+|---|---|
+| Linux | Target operating system |
+| Gunicorn | Python web server |
+| Python | Backend application technology |
+| Watchtower | Internal operations dashboard |
+| FreePBX | Internal telephony platform |
+| REST API | Application and automation interface |
+| OpenSSH | SSH access and local port forwarding |
+| Netcat | Reverse-shell listener |
+
+### Documented assessment tooling
+
+| Tool or technology | Documented use |
+|---|---|
+| Nmap | Network reconnaissance and service enumeration |
+| SSH / OpenSSH | Local port forwarding |
+| Netcat | Reverse-shell listener |
+| Linux shell utilities | Host and environment investigation |
+| HTTP interfaces | Web application and API investigation |
+
+The source does not provide the complete original command history or tool-version information. This inventory therefore does not introduce additional tools or claim that undocumented commands were executed.
+
+---
+
+## Technical Skills Demonstrated
+
+### Offensive security
+
+- Network reconnaissance.
+- HTTP and web application enumeration.
+- Hidden endpoint discovery.
+- OS command-injection analysis.
+- Reverse-shell access.
+- Linux post-exploitation.
+- Internal service discovery.
+- SSH local port forwarding.
+- REST API investigation.
+- Authentication artifact discovery.
+- Privilege-escalation analysis.
+
+### Security engineering and analysis
+
+- Attack-surface mapping.
+- Internal trust-boundary analysis.
+- Configuration-disclosure assessment.
+- Credential-exposure analysis.
+- CWE classification.
+- OWASP category mapping.
+- MITRE ATT&CK mapping review.
+- Risk analysis.
+- Defensive detection planning.
+- Security hardening recommendations.
+- Evidence-based technical reporting.
+
+---
+
+## Blue Team Perspective
+
+The Infinity Pool attack chain provides several useful defensive investigation points.
+
+A defensive review should correlate application activity, process creation, authentication events, network connections, and access to internal services instead of examining each event in isolation.
+
+### Detection Opportunities
+
+| Detection area | What to investigate |
+|---|---|
+| Web application process execution | Unexpected child processes spawned by Gunicorn or Python workers |
+| Reverse-shell behavior | Unexpected outbound TCP connections and shell processes |
+| SSH forwarding | Unusual local forwarding sessions and access to internal administrative ports |
+| Configuration API access | Unexpected requests for configuration data and internal service references |
+| FreePBX and voicemail access | Unusual access to operational messages and authentication-related artifacts |
+| Export API activity | Repeated or abnormal requests to `/jobs/export` |
+| Automation worker execution | Unexpected shell commands launched by the automation service |
+| Privileged execution | Commands executed with root privileges by application or automation processes |
+
+### Suspicious process investigation
+
+The original documentation identifies the following process names as relevant to its defensive hunting discussion:
 
 ```text
 bash
@@ -1001,15 +1009,17 @@ tar
 nc
 ```
 
-Spawned from:
+Investigate whether these processes were launched unexpectedly by:
 
-- Gunicorn
-- Python Workers
-- Automation Service
+- Gunicorn.
+- Python application workers.
+- The automation service.
 
----
+These process names are investigation leads, not proof of malicious activity. Their significance depends on parent-child relationships, command-line arguments, execution context, and surrounding events.
 
-### Network Indicators
+### Network investigation
+
+The original source highlights the following indicators for review:
 
 ```text
 SSH -L
@@ -1018,253 +1028,268 @@ SSH -L
 127.0.0.1:9000
 ```
 
----
+These values identify the forwarding pattern and internal ports documented in the walkthrough. They are not independently verified indicators of compromise.
 
-### API Abuse
+### API abuse investigation
 
-Look for:
+Review:
 
-- Repeated `/jobs/export`
+- Repeated requests to `/jobs/export`.
 - Unusual report names.
 - Authentication anomalies.
-- Long-running export jobs.
+- Unexpectedly long-running export jobs.
+- Application workers launching shell processes.
+- Requests that produce unexpected changes in execution behavior.
+
+### Defensive correlation
+
+A useful investigation sequence is to correlate:
+
+1. The originating HTTP request.
+2. The application process handling that request.
+3. Any child process created by the application.
+4. Subsequent outbound connections.
+5. Authentication activity against internal services.
+6. Access to configuration or voicemail data.
+7. Execution activity associated with the automation worker.
+
+This approach can help defenders reconstruct a multi-stage intrusion rather than treating each event as an isolated alert.
 
 ---
 
-# 🔒 Hardening Checklist
+## Security Recommendations
 
-## Web Application Security
+The following recommendations derive from the documented findings.
 
-- [x] Validate all user input.
-- [x] Remove shell execution.
-- [x] Sanitize host parameters.
-- [x] Allow-list destinations.
-- [x] Use safe subprocess execution.
+### 1. Web application security
 
----
-
-## API Security
-
-- [x] Authenticate internal APIs.
-- [x] Validate request schemas.
-- [x] Avoid shell invocation.
-- [x] Restrict administrative endpoints.
-
----
-
-## Secrets Management
-
-- [x] Remove secrets from configuration APIs.
-- [x] Never store credentials in voicemail.
-- [x] Rotate exposed authentication artifacts.
-- [x] Use centralized secret management.
-
----
-
-## Infrastructure Security
-
-- [x] Least privilege automation workers.
-- [x] Network segmentation.
-- [x] Service-to-service authentication.
-- [x] Audit localhost administrative services.
-
----
-
-# 📸 Evidence Gallery
-
-## External Reconnaissance
-
-| | |
+| Finding | Recommended control |
 |---|---|
-| <img src="assets/01_initial_web.png"> | <img src="assets/02_status_endpoint.png"> |
-| Landing Page | Hidden Status Endpoint |
+| Command injection | Remove unnecessary shell execution and use safe process APIs |
+| Untrusted command parameters | Validate inputs against strict allow-lists and expected data types |
+| Unsafe destination selection | Restrict permitted destinations and reject untrusted host parameters |
+| Excessive process privileges | Run web application workers with least privilege |
 
----
+### 2. API security
 
-## Initial Exploitation
-
-| | |
+| Finding | Recommended control |
 |---|---|
-| <img src="assets/03_command_injection.png"> | <img src="assets/04_reverse_shell.png"> |
-| Command Injection | Reverse Shell |
+| Internal API exposure | Enforce authentication and authorization on administrative APIs |
+| Configuration disclosure | Restrict sensitive responses and remove unnecessary infrastructure details |
+| Unsafe export processing | Use structured input and avoid shell-based command construction |
+| Excessive administrative functionality | Restrict endpoints and permissions to the minimum required |
 
----
+### 3. Secrets management
 
-## Internal Enumeration
-
-| | |
+| Finding | Recommended control |
 |---|---|
-| <img src="assets/05_internal_services.png"> | <img src="assets/06_watchtower.png"> |
-| Local Services | Watchtower Dashboard |
+| Authentication artifact exposure | Store secrets in a dedicated secrets-management system |
+| Exposed credentials or tokens | Revoke or rotate affected artifacts |
+| Sensitive operational communications | Avoid storing reusable credentials in voicemail or ordinary messages |
+| Broad credential access | Apply least privilege and service-specific authentication |
 
----
+### 4. Infrastructure security
 
-## Internal Pivoting
-
-| | |
+| Finding | Recommended control |
 |---|---|
-| <img src="assets/07_watchtower_config.png"> | <img src="assets/08_ssh_port_forwarding.png"> |
-| Configuration API | SSH Port Forwarding |
+| Localhost trust assumptions | Enforce identity and authorization checks |
+| Internal service exposure | Restrict access using network controls and application-level policies |
+| Excessively privileged automation | Run automation workers with minimum required permissions |
+| Unmonitored internal activity | Audit administrative services and correlate access with process execution |
+| Unnecessary forwarding capabilities | Restrict SSH forwarding according to operational requirements |
+
+### Hardening Checklist
+
+The following checklist converts the original hardening recommendations into implementation-oriented controls.
+
+- [ ] Validate user input at application boundaries.
+- [ ] Remove unnecessary shell execution.
+- [ ] Sanitize or strictly validate host parameters.
+- [ ] Allow-list permitted destinations.
+- [ ] Use safe subprocess execution.
+- [ ] Authenticate internal APIs.
+- [ ] Validate API request schemas.
+- [ ] Restrict administrative endpoints.
+- [ ] Remove secrets from configuration responses.
+- [ ] Rotate exposed authentication artifacts.
+- [ ] Use centralized secret management.
+- [ ] Apply least privilege to automation workers.
+- [ ] Implement network segmentation where appropriate.
+- [ ] Enforce service-to-service authentication.
+- [ ] Audit localhost-bound administrative services.
+- [ ] Monitor suspicious application child processes and privileged execution.
+
+The checklist is a set of recommended remediation tasks, not a claim that these controls have already been implemented.
 
 ---
 
-## Credential Discovery
+## Evidence Gallery
 
-| | |
+The gallery preserves the original screenshot paths and groups the evidence by assessment phase.
+
+### External reconnaissance
+
+| Evidence | Description |
 |---|---|
-| <img src="assets/09_ucp_login.png"> | <img src="assets/10_automation_key.png"> |
-| FreePBX UCP | Voicemail Artifact |
+| ![Initial web reconnaissance](assets/01_initial_web.png) | Initial landing page |
+| ![Hidden status endpoint](assets/02_status_endpoint.png) | Status endpoint discovery |
 
----
+### Initial exploitation
 
-## Privilege Escalation
-
-| | |
+| Evidence | Description |
 |---|---|
-| <img src="assets/11_automation_api.png"> | <img src="assets/12_root_access.png"> |
-| Automation API | Root Execution |
+| ![Command injection](assets/03_command_injection.png) | Command-injection investigation |
+| ![Reverse shell](assets/04_reverse_shell.png) | Reverse-shell access |
+
+### Internal enumeration
+
+| Evidence | Description |
+|---|---|
+| ![Internal service discovery](assets/05_internal_services.png) | Internal service enumeration |
+| ![Watchtower dashboard](assets/06_watchtower.png) | Watchtower operations dashboard |
+
+### Internal pivoting
+
+| Evidence | Description |
+|---|---|
+| ![Watchtower configuration API](assets/07_watchtower_config.png) | Configuration API investigation |
+| ![SSH local port forwarding](assets/08_ssh_port_forwarding.png) | SSH forwarding investigation |
+
+### Credential discovery
+
+| Evidence | Description |
+|---|---|
+| ![FreePBX UCP](assets/09_ucp_login.png) | FreePBX UCP investigation |
+| ![Automation authentication artifact](assets/10_automation_key.png) | Redacted authentication-artifact evidence |
+
+### Privilege escalation
+
+| Evidence | Description |
+|---|---|
+| ![Automation API](assets/11_automation_api.png) | Automation API investigation |
+| ![Root access](assets/12_root_access.png) | Root-level execution evidence |
+
+### Attack-path overview
+
+![Infinity Pool attack path](assets/13_attack_path.png)
+
+*Figure 13 — Original attack-path overview.*
+
+All image references above retain the original relative paths. The screenshots must remain available at those paths within the `docs/` directory for the GitHub Pages documentation to render correctly.
 
 ---
 
-# 📚 Skills Demonstrated
+## Learning Outcomes
 
-<table>
-<tr>
-<th width="50%">Offensive Security</th>
-<th width="50%">Defensive Security</th>
-</tr>
+The documented assessment provides practical experience in the following areas.
 
-<tr>
-<td>
+### Web application security
 
-- Network Reconnaissance
-- Web Enumeration
-- Command Injection
-- Reverse Shells
-- Linux Enumeration
-- SSH Pivoting
-- REST API Enumeration
-- Privilege Escalation
+- Investigating exposed web resources.
+- Discovering operational endpoints.
+- Understanding OS command injection.
+- Relating application vulnerabilities to operating system execution.
 
-</td>
+### Linux post-exploitation
 
-<td>
+- Stabilizing an interactive shell.
+- Enumerating the host environment.
+- Discovering local services.
+- Investigating application processes and internal interfaces.
 
-- Attack Surface Mapping
-- Configuration Review
-- MITRE ATT&CK
-- OWASP Analysis
-- Risk Assessment
-- Detection Engineering
-- Hardening Recommendations
-- Incident Indicators
+### Internal infrastructure security
 
-</td>
-</tr>
+- Understanding localhost trust boundaries.
+- Investigating internal dashboards and REST APIs.
+- Using SSH forwarding to reach internal services.
+- Assessing the consequences of exposed configuration.
 
-</table>
+### Credential and privilege analysis
 
----
+- Recognizing authentication artifacts in operational applications.
+- Understanding credential chaining across services.
+- Identifying unsafe command construction in administrative workers.
+- Analyzing the impact of root-level execution.
 
-# 🎓 Learning Outcomes
+### Defensive security
 
-Infinity Pool provided practical experience with:
-
-- Web Application Security Testing.
-- Linux Post Exploitation.
-- Localhost Trust Boundary Analysis.
-- Internal Dashboard Investigation.
-- Authentication Artifact Discovery.
-- REST API Security.
-- Command Injection.
-- Privilege Escalation.
-- Professional Security Reporting.
+- Identifying useful process and network telemetry.
+- Mapping documented activity to security frameworks.
+- Deriving remediation controls from observed weaknesses.
+- Organizing technical evidence into a structured report.
 
 ---
 
-# 📁 Repository Resources
+## Repository Resources
 
-<table>
-<tr>
-<th>Resource</th>
-<th>Description</th>
-</tr>
+The original documentation references the following repository resources.
 
-<tr>
-<td><code>README.md</code></td>
-<td>Repository landing page.</td>
-</tr>
+| Resource | Purpose |
+|---|---|
+| `README.md` | Repository landing page |
+| `Documentation/Documentation.md` | Complete penetration testing report |
+| `Documentation/Infinity_Pool_Documentation.docx` | Professional report document |
+| `Resources/notes.md` | Quick methodology notes |
+| `SECURITY.md` | Responsible disclosure policy |
 
-<tr>
-<td><code>Documentation/Documentation.md</code></td>
-<td>Complete penetration testing report.</td>
-</tr>
-
-<tr>
-<td><code>Documentation/Infinity_Pool_Documentation.docx</code></td>
-<td>Professional report format.</td>
-</tr>
-
-<tr>
-<td><code>Resources/notes.md</code></td>
-<td>Quick methodology notes.</td>
-</tr>
-
-<tr>
-<td><code>SECURITY.md</code></td>
-<td>Responsible disclosure policy.</td>
-</tr>
-
-</table>
+These are references retained from the original source. Their presence or current contents have not been independently verified.
 
 ---
 
-# ⚖️ Responsible Use
+## Conclusion
 
-> This documentation represents activities performed **only inside an authorized TryHackMe laboratory environment**.
+Infinity Pool demonstrates how a series of weaknesses across application and infrastructure boundaries can create a path from initial web exploitation to privileged command execution.
 
-### Redacted Information
+The documented progression begins with endpoint discovery and OS command injection. Following initial access, host enumeration exposes internal services and administrative applications. Configuration disclosure and authentication-artifact discovery then provide additional context for investigating the Automation API, where a second command-injection weakness leads to the documented root-level outcome.
 
-- 🚫 User Flag
-- 🚫 Root Flag
-- 🚫 Passwords
-- 🚫 API Tokens
-- 🚫 Automation Keys
-- 🚫 Sensitive Credentials
+The central security lessons are:
 
-This repository exists solely for **education**, **security research**, and **portfolio presentation**.
+- Input must never be treated as safe merely because it originates from an internal interface.
+- Localhost binding is not a replacement for authentication and authorization.
+- Configuration responses and operational communications should not expose reusable secrets.
+- Automation services require strict input handling and least-privilege execution.
+- Application, process, network, and authentication telemetry should be correlated to identify chained attacks.
 
----
-
-<div align="center">
-
-# 👨‍💻 Author
-
-## Anurag Revankar
-
-### Cybersecurity Portfolio
-
-SOC Analyst • Penetration Tester • Security Enthusiast
-
-Building practical cybersecurity projects through:
-
-🛡️ TryHackMe Labs
-
-🌐 Web Application Security
-
-🖥️ Linux Privilege Escalation
-
-🏢 Active Directory Labs
-
-⚙️ Security Automation
-
-📊 Detection Engineering
+The walkthrough provides a structured demonstration of web security assessment, Linux enumeration, internal application investigation, and defensive analysis while retaining the original documentation's intentional redactions.
 
 ---
 
-### ⭐ If you found this walkthrough helpful, consider starring the repository.
+## References
 
-**Infinity Pool — Professional TryHackMe Walkthrough**
+The source documentation identifies the following resources:
 
+- [TryHackMe](https://tryhackme.com/) — training platform associated with the Infinity Pool laboratory.
+- [MITRE ATT&CK](https://attack.mitre.org/) — framework referenced by the original technique mapping.
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/) — application security categories referenced by the original report.
+- [Common Weakness Enumeration (CWE)](https://cwe.mitre.org/) — weakness classifications referenced in the vulnerability dashboard.
 
-</div>
+These are general framework and platform references. The original source does not identify a specific vulnerability advisory, CVE, external exploit publication, or detailed vendor remediation document.
+
+---
+
+## Responsible Use
+
+> This documentation describes activities performed in an authorized TryHackMe laboratory environment. Techniques discussed here must only be used against systems for which explicit testing permission has been granted.
+
+Sensitive challenge flags, passwords, API tokens, automation keys, and other credentials remain redacted.
+
+This document is intended for cybersecurity education, security research, technical portfolio presentation, and defensive learning.
+
+---
+
+## Author
+
+**Anurag Revankar**
+
+Cybersecurity Portfolio | Security Research | Penetration Testing
+
+Areas of focus represented in this project:
+
+- TryHackMe security laboratories.
+- Web application security.
+- Linux privilege escalation.
+- Internal infrastructure analysis.
+- Security automation.
+- Detection engineering.
+- Defensive security recommendations.
+
