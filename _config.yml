@@ -1,11 +1,49 @@
-title: "Infinity Pool — TryHackMe Documentation"
-description: "Professional portfolio documentation for the Infinity Pool TryHackMe CTF."
-theme: jekyll-theme-hacker
+title: "Cybersecurity CTF Portfolio"
+
+description: "Professional cybersecurity CTF, penetration testing, and security research documentation."
+
+lang: "en-US"
+
 markdown: kramdown
-plugins:
-  - jekyll-relative-links
-relative_links:
-  enabled: true
-  collections: true
+
+kramdown:
+  input: GFM
+  hard_wrap: false
+
+# ------------------------------------------------------------
+# GitHub Pages / Jekyll
+# ------------------------------------------------------------
+
 include:
   - docs
+
+# ------------------------------------------------------------
+# Default layout for all Markdown pages inside docs/
+# ------------------------------------------------------------
+
+defaults:
+  - scope:
+      path: "docs"
+    values:
+      layout: "default"
+
+# ------------------------------------------------------------
+# Sass
+# ------------------------------------------------------------
+
+sass:
+  sass_dir: assets/css
+  style: compressed
+
+# ------------------------------------------------------------
+# Exclusions
+# ------------------------------------------------------------
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .github
+  - .git
