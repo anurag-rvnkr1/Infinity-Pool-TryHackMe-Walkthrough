@@ -40,42 +40,44 @@ tags:
 
 <div class="ctf-toc-title">Documentation Map</div>
 
-- [Mission and Executive Summary](#mission-and-executive-summary)
-- [Quick Overview](#quick-overview)
-- [Assessment Objectives](#assessment-objectives)
-- [Scope and Responsible Use](#scope-and-responsible-use)
-- [Lab Architecture](#lab-architecture)
-- [Threat Model and Attack Surface](#threat-model-and-attack-surface)
-- [Assessment Methodology](#assessment-methodology)
-- [Attack Progress Dashboard](#attack-progress-dashboard)
-- [Reconnaissance](#reconnaissance)
-- [Hidden Endpoint Discovery](#hidden-endpoint-discovery)
-- [Initial Exploitation and Access](#initial-exploitation-and-access)
-- [Linux Post-Exploitation](#linux-post-exploitation)
-- [Internal Service Discovery](#internal-service-discovery)
-- [Watchtower Dashboard](#watchtower-dashboard)
-- [Configuration API Enumeration](#configuration-api-enumeration)
-- [SSH Local Port Forwarding](#ssh-local-port-forwarding)
-- [FreePBX User Control Panel](#freepbx-user-control-panel)
-- [Voicemail Artifact Discovery](#voicemail-artifact-discovery)
-- [Automation API Investigation](#automation-api-investigation)
-- [Root Privilege Escalation](#root-privilege-escalation)
-- [Complete Attack Chain](#complete-attack-chain)
-- [Vulnerability Dashboard](#vulnerability-dashboard)
-- [MITRE ATT&CK Mapping](#mitre-attck-mapping)
-- [OWASP Top 10 Coverage](#owasp-top-10-coverage)
-- [Technology Stack and Tools](#technology-stack-and-tools)
-- [Technical Skills Demonstrated](#technical-skills-demonstrated)
-- [Blue Team Perspective](#blue-team-perspective)
-- [Detection Opportunities](#detection-opportunities)
-- [Security Recommendations](#security-recommendations)
-- [Evidence Gallery](#evidence-gallery)
-- [Learning Outcomes](#learning-outcomes)
-- [Repository Resources](#repository-resources)
-- [Conclusion](#conclusion)
-- [References](#references)
-- [Responsible Use](#responsible-use)
-- [Author](#author)
+<ul>
+<li><a href="#mission-and-executive-summary">Mission and Executive Summary</a></li>
+<li><a href="#quick-overview">Quick Overview</a></li>
+<li><a href="#assessment-objectives">Assessment Objectives</a></li>
+<li><a href="#scope-and-responsible-use">Scope and Responsible Use</a></li>
+<li><a href="#lab-architecture">Lab Architecture</a></li>
+<li><a href="#threat-model-and-attack-surface">Threat Model and Attack Surface</a></li>
+<li><a href="#assessment-methodology">Assessment Methodology</a></li>
+<li><a href="#attack-progress-dashboard">Attack Progress Dashboard</a></li>
+<li><a href="#reconnaissance">Reconnaissance</a></li>
+<li><a href="#hidden-endpoint-discovery">Hidden Endpoint Discovery</a></li>
+<li><a href="#initial-exploitation-and-access">Initial Exploitation and Access</a></li>
+<li><a href="#linux-post-exploitation">Linux Post-Exploitation</a></li>
+<li><a href="#internal-service-discovery">Internal Service Discovery</a></li>
+<li><a href="#watchtower-dashboard">Watchtower Dashboard</a></li>
+<li><a href="#configuration-api-enumeration">Configuration API Enumeration</a></li>
+<li><a href="#ssh-local-port-forwarding">SSH Local Port Forwarding</a></li>
+<li><a href="#freepbx-user-control-panel">FreePBX User Control Panel</a></li>
+<li><a href="#voicemail-artifact-discovery">Voicemail Artifact Discovery</a></li>
+<li><a href="#automation-api-investigation">Automation API Investigation</a></li>
+<li><a href="#root-privilege-escalation">Root Privilege Escalation</a></li>
+<li><a href="#complete-attack-chain">Complete Attack Chain</a></li>
+<li><a href="#vulnerability-dashboard">Vulnerability Dashboard</a></li>
+<li><a href="#mitre-attck-mapping">MITRE ATT&amp;CK Mapping</a></li>
+<li><a href="#owasp-top-10-coverage">OWASP Top 10 Coverage</a></li>
+<li><a href="#technology-stack-and-tools">Technology Stack and Tools</a></li>
+<li><a href="#technical-skills-demonstrated">Technical Skills Demonstrated</a></li>
+<li><a href="#blue-team-perspective">Blue Team Perspective</a></li>
+<li><a href="#detection-opportunities">Detection Opportunities</a></li>
+<li><a href="#security-recommendations">Security Recommendations</a></li>
+<li><a href="#evidence-gallery">Evidence Gallery</a></li>
+<li><a href="#learning-outcomes">Learning Outcomes</a></li>
+<li><a href="#repository-resources">Repository Resources</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#references">References</a></li>
+<li><a href="#responsible-use">Responsible Use</a></li>
+<li><a href="#author">Author</a></li>
+</ul>
 
 </div>
 
